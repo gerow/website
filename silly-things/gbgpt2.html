@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>mgerow.com</title>
+    <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body>
+    <header>
+        <h1>
+            <a href=".">Silly Things</a>
+        </h1>
+        <nav>
+            <a href="/" title="root">root</a>
+            <a href="/weblog" title="weblog">weblog</a>
+            <a href="/silly-things" title="silly-things">silly-things</a>
+        </nav>
+    </header>
+    <h1>Generating Fake Video Game Descriptions Using GPT-2</h1>
+    <time datetime="2020-02-03">2020-02-03</time>
+    <p>
+        I put together <a href="https://github.com/gerow/gbgpt2">a couple of python scripts</a> to fetch and clean up
+        video game titles and descriptions from <a href="https://www.giantbomb.com/games/">the Giant Bomb wiki</a> and
+        fed them to GPT-2 in an attempt to generate some fake video game names and descriptions. The original intent
+        here was mostly to generate things that sound silly, with the secondary use to <i>maybe</i> provide a prompt for
+        things like game jams.
+    </p>
+    <p>
+        <a href="https://www.giantbomb.com/api/">The Giant Bomb API</a> proved to make this super easy, and with some
+        filtering to get rid of lower quality articles we are left with a decent corpus. From there I filtered out
+        things that weren't text in the articles and used <a href="https://pypi.org/project/html2markdown/">the
+            html2markdown library</a> to convert the articles to markdown. As it turns out, GPT-2 is pretty good at
+        learning markdown syntax and actively uses headings and lists to pretty decent effect.
+    </p>
+    <p>
+        I then used Max Wolof's fantastic article <a href="https://minimaxir.com/2019/09/howto-gpt2/">How To Make Custom
+            AI-Generated Text With GPT-2</a> as a guide to teach GPT-2 to spit out video game titles and descriptions
+        formatted as markdown. The article describes how to use a free GPU in Colab to train the model, so no need for
+        fancy hardware to do this.
+    </p>
+    <p>
+        As for the results, you can find them in <a
+            href="https://github.com/gerow/gbgpt2-examples/tree/HEAD/examples">my examples repo</a>. These results
+        aren't curated in any way, and thus plenty of them are, uhh, <a
+            href="https://github.com/gerow/gbgpt2-examples/blob/HEAD/examples/394.md">somewhat</a> <a
+            href="https://github.com/gerow/gbgpt2-examples/blob/HEAD/examples/398.md">bad</a>. But some of them are
+        pretty decent, at least if you're looking for a laugh. A few of my favorites:
+    </p>
+    <p>
+        <a href="https://github.com/gerow/gbgpt2-examples/blob/HEAD/examples/374.md">Another Day at the Beach</a>, with
+        the summary being:
+    <blockquote>
+        <p>
+            A beach house in an abandoned town.
+        </p>
+
+        <p>
+            The player is lead to the beach by a mysterious old man. You can see the old man, but he does not speak. He
+            simply has a large bag with the keys inside. The house is bugged.
+        </p>
+    </blockquote>
+    </p>
+    <p>
+        <a href="https://github.com/gerow/gbgpt2-examples/blob/HEAD/examples/379.md#characters">Battle of Elba for the
+            Nintendo Entertainment System in 1985.</a> (yes, that's the full name of the game) provides a decent example
+        of how GPT-2 can often get stuck in repetition, with its list of characters switching back and forth between a
+        character named "Elba" and a character named "Kael" with slightly different descriptions each time.
+    </p>
+    <p>
+        <a href="https://github.com/gerow/gbgpt2-examples/blob/HEAD/examples/388.md">Battleship</a>, which is very much
+        unlike the original board game.
+    <blockquote>
+        <p>Battleship is a turn-based strategy game, and the goal is to hold all the resources until the end.</p>
+
+        <p>Battleship is a first-person shooter, and the game is set in a world of endless possibilities. The game
+            features a large variety of ships and classes, with the player doing everything from defending a mine with a
+            crew, to building a fleet of ships and running from a squadron of invaders.</p>
+
+        <p>However, the player doesn't have to necessarily build a fleet of ships. If he wants, he can simply go to a
+            planet and find a resource. Here, the player can either go and find the resource, or build his fleet of
+            ships.</p>
+
+        <p>The game is not simple, however, as in order to hold all resources, the player must go through the planet; he
+            can't just sit there and wait as a resource is being produced.</p>
+    </blockquote>
+    </p>
+    <p>
+        <a href="https://github.com/gerow/gbgpt2-examples/blob/HEAD/examples/393.md">New York, New York</a>, with the
+        worryingly problematic description:
+    <blockquote>
+        <p>
+            The game is set in Manhattan and its inhabitants are mostly white. The game features a significant increase
+            in violence due to the fact that the game is set in a city that is heavily multicultural.
+        </p>
+    </blockquote>
+    </p>
+    <p>
+        <a href="https://github.com/gerow/gbgpt2-examples/blob/HEAD/examples/396.md">The Legend of Zelda: The Minish
+            Cap</a>, which of course is a real video game, but in this version of it you get to play as the cap itself.
+    <blockquote>
+        <p>
+            The Minish Cap is the game's protagonist. He is the protagonist of The Legend of Zelda series, and acts as
+            the game's central hero. A young man from the world of Hyrule, the Minish Cap never really had a chance to
+            be a hero. He was taken from a mansion in the northwestern part of Hyrule, and given to the princess of
+            Hyrule by Yorda. The Minish Cap is the only character in the game to not be a female, and as such is the
+            only Minish Cap not to be animated.
+        </p>
+    </blockquote>
+    </p>
+    <p>
+        If you happen to find any interesting or funny article(s) <a
+            href="https://github.com/gerow/gbgpt2-examples/tree/HEAD/examples">among the examples</a> feel free to <a
+            href="mailto:gerow@mgerow.com">reach out to me</a> and I'll add it/them to this list.
+    </p>
+    <footer>
+        <nav>
+            <a href=".">silly-things index</a>
+        </nav>
+    </footer>
+</body>
+
+</html>

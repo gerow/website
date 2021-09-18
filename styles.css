@@ -1,9 +1,17 @@
 body {
   color: white;
-  background-color: black;
-  font-size: 18px;
+  background-color: rgb(20, 20, 20);
+  font-size: 20px;
 }
 
 p {
   max-width: 960px;
+}
+
+a:link{
+  color: lightblue;
+}
+
+a:visited{
+  color: mediumpurple;
 }
