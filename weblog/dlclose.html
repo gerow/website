@@ -20,7 +20,7 @@
         </nav>
     </header>
     <h1><code>dlclose()</code>: Not Even Once</h1>
-    <time datetime="2021-09-19">2021-19-19</time>
+    <time datetime="2021-09-19">2021-09-19</time>
     <p>
         In another life<sup><a href="#1">1</a></sup> I had the (mis)fortune of working on a project where I needed to
         implement a <a href="https://en.wikipedia.org/wiki/PKCS_11">PKCS-11</a><sup><a href="#2">2</a></sup> library in
@@ -97,7 +97,7 @@ Cannot access memory at address 0xe8e7a948
         at any moment in time, just isn't worth it.
     </p>
     <p>
-        Heck, even widely used libraries that are, in theory, mean to be able to be properly <code>dlclose()</code>'d
+        Heck, even widely used libraries that are, in theory, meant to be able to be properly <code>dlclose()</code>'d
         don't always get this right. Take <a
             href="https://sourceforge.net/p/opencryptoki/mailman/message/34873512/">this example I found in
             openCryptoki</a> in which
