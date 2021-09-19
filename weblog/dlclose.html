@@ -116,13 +116,13 @@ Cannot access memory at address 0xe8e7a948
     <p>
         But what if you're in my unfortunate position where you're writing the poor little library that just wanted to
         live free with its instructions mapped until the day of <code>exit()</code>ing. Well it's pretty simple,
-        actually, you just <code>dlopen()</code> yourself.
+        actually, you just <code>dlopen()</code> the library that's being <code>dlopen()</code>'d.
     </p>
     <p>
-        By <code>dlopen</code>ing yourself you bump the reference counter for your library and its dependencies and put
-        an end to any possibility of your instruction space being unceremoniously unmapped out from under you again.
-        Unless whatever application is using you is poorly written and is double (or triple!) closing you for some
-        reason. In that case, maybe just <code>dlopen()</code> yourself a few times. 10 should do.
+        By doing this you bump the reference counter for your library and its dependencies and put an end to any
+        possibility of your instruction space being unceremoniously unmapped out from under you again. Unless whatever
+        application is using you is poorly written and is double (or triple!) closing your library for some reason. In
+        that case, maybe just <code>dlopen()</code> yourself a few times. 10 should do.
     </p>
 
     <p id="1">[1] about five years ago</p>
