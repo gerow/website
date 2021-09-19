@@ -1,7 +1,15 @@
 body {
   color: white;
   background-color: black;
-  font-size: 20px;
+  font-size: 110%;
+}
+
+nav {
+  font-size: 130%;
+}
+
+nav a {
+  padding: 5%;
 }
 
 p {
@@ -21,4 +29,9 @@ blockquote {
   border-left-width: 2px;
   border-left-color: white;
   padding-left: 5px;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
 }
