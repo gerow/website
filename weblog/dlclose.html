@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>mgerow.com</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script data-goatcounter="https://gerow.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1>
+            <a href=".">Mike's Weblog</a>
+        </h1>
+        <nav>
+            <a href="/" title="root">root</a>
+            <a href="/weblog" title="weblog">weblog</a>
+            <a href="/silly-things" title="silly-things">silly-things</a>
+        </nav>
+    </header>
+    <h1><code>dlclose()</code>: Not Even Once</h1>
+    <time datetime="2021-09-19">2021-19-19</time>
+    <p>
+        In another life<sup><a href="#1">1</a></sup> I had the (mis)fortune of working on a project where I needed to
+        implement a <a href="https://en.wikipedia.org/wiki/PKCS_11">PKCS-11</a><sup><a href="#2">2</a></sup> library in
+        C++<sup><a href="#3">3</a></sup> that acted as a shim to translate signature requests from PKCS-11's
+        interface to that of a another service on the box available over D-Bus.
+    </p>
+    <p>
+        If that last paragraph made sense to you then I'm so sorry.
+    </p>
+    <p>
+        In either case, while going about making this horrible thing become a reality I ran into a fun bug that seemed
+        to happen every so often. After the application loading the library had finished reading the certificates and
+        keys provided by the library, and performed a signing operation, it would crash with a <code>SIGBUS</code> or a
+        <code>SEGFAULT</code>. This was unusual, because it really wasn't meant to do that.
+    </p>
+    <p>
+        After an hour or so of hopless <code>printf</code> debugging I finally Did The Right Thing and reached for good
+        old <code>gdb</code>.
+    </p>
+    <p>
+        Sure enough <code>gdb</code> caught the address fault, but (being somewhat unfamiliar with
+        <code>gdb</code> at the time<sup><a href="#4">4</a></sup>) it took me a while to figure out <em>what</em>
+        exactly was causing the address fault. Eventually I presented <code>gdb</code> with a query, whose response I
+        hope to never see again.
+    </p>
+
+    <pre><code>
+(gdb) print *$pc
+Cannot access memory at address 0xe8e7a948
+    </code></pre>
+
+    <p>
+        To translate: my program counter (the bit the CPU uses to keep track of where it's heading) was pointing to
+        memory that isn't accessible. Understandably this makes it difficult for the CPU to figure out what the next
+        instruction it should run is.
+    </p>
+    <p>
+        After some more debugging (honestly I don't remember this part, but I'm sure it involved hitting my desk at
+        least a few times an hour) I came to the realization that the thread that mysteriously was trying to execute
+        memory that semed to have nothing behind it was coming from a worker thread from the GDBus library, a library
+        that's part of GLib's <a href="https://gnome.pages.gitlab.gnome.org/gtk/gio/">GIO</a> set of libararies, that
+        made using D-Bus <s>easy</s>easier.
+    </p>
+    <p>
+        Did GLib betray me? Are the GNOME devs actively out to eat my lunch by having GIO jump to wild far-flung
+        addresses in an attempt to ruin my day? These questions can't possibly be answered, but what I do know is that
+        we eventually have to get back to the title of this post, and we've reached that point now.
+    </p>
+    <p>
+        <code><a href="https://manpages.debian.org/bullseye/manpages-dev/dlclose.3.en.html">dlclose()</a></code> is the
+        deceptively pleasant and even banal sounding counterpart to
+        <code><a href="https://manpages.debian.org/bullseye/manpages-dev/dlopen.3.en.html">dlopen()</a></code>. But
+        don't be fooled, <code>dlclose()</code> hates you. It hates you, it hates your family, and it <em>will</em> eat
+        your lunch if given the chance.
+    </p>
+    <p>
+        You see, PKCS-11 was implemented as a C library meant to be dynamically opened with <code>dlopen()</code>, which
+        was the style at the time<sup><a href="#5">5</a></sup>. <code>dlopen()</code> helpfully loads an arbitrary
+        <code>.so</code> file and its runtime dependencies into the current address space, and provides a handle to get
+        functions within it. <code>dlclose()</code>, on the other hand, mercilessly rips the aforementioned
+        <code>.so</code> file <em>and its dependencies</em> right out of mapped memory no matter how you or your
+        dependencies feel about it<sup><a href="#6">6</a></sup>.
+    </p>
+    <p>
+        Which brings us back to GLib. As it turns out, GLib's worker thread was still running when
+        <code>dlclose()</code> was called on my library. So GLib messed up right? Well, I didn't really tell it its
+        instructions might be unmapped right out from under it. And GLib doesn't have a way for me to tell it "hey, you
+        got like 1 second, be ready to be completely unmapped from memory, sg ok?".
+    </p>
+    <p>
+        And really, it's fair it doesn't do that. It's hard enough to write a C library that can handle all the weird
+        edge cases around what process its workers are in, or how threads may or may not be working in any particular
+        state. Add on top of that needing to have complex code to clean up all your state and prepare to be unmapped
+        at any moment in time, just isn't worth it.
+    </p>
+    <p>
+        Heck, even widely used libraries that are, in theory, mean to be able to be properly <code>dlclose()</code>'d
+        don't always get this right. Take <a
+            href="https://sourceforge.net/p/opencryptoki/mailman/message/34873512/">this example I found in
+            openCryptoki</a> in which
+        every time one <code>dlcose()</code>es the library a file descriptor is leaked<sup><a href="#7">7</a></sup>.
+    </p>
+    <p>
+        So how do we fix this? It's simple, never <code>dlclose()</code>. Just don't do it. I know you might think
+        you're some Real Smart Programmer That Really Actually Knows What They're Doing, but even if you're right the
+        benefits simply aren't there. Once you've <code>dlopen()</code>'d you've opened pandora's box, there's no way
+        you're goin to cleanly stuff all those bits back inside. And what do you gain when you run
+        <code>dlclose()</code> anyway? You maybe get back a few megabytes of <em>address space</em>. Not memory,
+        <em>address space</em>. If you're on a 16 bit machine, sure save that address space (how the heck are you
+        using a POSIX-compliant <code>dlclose()</code> to begin with?!?). But if you're in the modern 64-bit world you
+        should never use <code>dlclose()</code>.
+    </p>
+    <p>
+        But what if you're in my unfortunate position where you're writing the poor little library that just wanted to
+        live free with its instructions mapped until the day of <code>exit()</code>ing. Well it's pretty simple,
+        actually, you just <code>dlopen()</code> yourself.
+    </p>
+    <p>
+        By <code>dlopen</code>ing yourself you bump the reference counter for your library and its dependencies and put
+        an end to any possibility of your instruction space being unceremoniously unmapped out from under you again.
+        Unless whatever application is using you is poorly written and is double (or triple!) closing you for some
+        reason. In that case, maybe just <code>dlopen()</code> yourself a few times. 10 should do.
+    </p>
+
+    <p id="1">[1] about five years ago</p>
+    <p id="2">[2] yuck</p>
+    <p id="3">[3] double yuck</p>
+    <p id="4">[4] not to imply present familiarity</p>
+    <p id="5">[5] 1995</p>
+    <p id="6">[6] interestingly, the <a href="https://pubs.opengroup.org/onlinepubs/9699919799/">POSIX spec for
+            <code>dlclose()</code></a> mentions this approach of ripping out the library and its dependencies is
+        completely optional. musl, for exmaple, opts to take the "do nothing because we don't have to" approach. what
+        some may consider an inefficiency in musl's implementation, I consider a strategy deep in wisdom (or laziness, I
+        haven't confirmed this yet, but it's like a good kind of laziness)</p>
+    <p id="7">[7] i have no idea if this was ever patched (i nih'd my way out of needing to use openCryptoki as you
+        might guess from this post) but if you have a long-running process that happens to <code>dlopen()</code> and
+        <code>dlclose()</code> openCryptoki over its lifetime and you're running into file descriptor exhaustions, you
+        might want to fix that (or better yet, as mentioned above, just stop using <code>dlclose()</code>)
+    </p>
+    <footer>
+        <nav>
+            <a href=".">weblog index</a>
+        </nav>
+    </footer>
+</body>
+
+</html>
